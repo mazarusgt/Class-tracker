@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ตารางเรียน ม.2/14 • ห้อง 7105</title>
+<style>
+  :root{
+    --bg:#0e1117;
+    --panel:#151a23;
+    --panel2:#1a2029;
+    --border:#262e3b;
+    --text:#e8ecf4;
+    --muted:#98a2b8;
+    --dim:#69748a;
+    color-scheme:dark;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:
+      radial-gradient(1100px 700px at 85% -10%, #1a2334 0%, rgba(26,35,52,0) 60%),
+      radial-gradient(900px 600px at -10% 110%, #17202e 0%, rgba(23,32,46,0) 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:'Leelawadee UI','Noto Sans Thai','Sukhumvit Set','Segoe UI',system-ui,sans-serif;
+    padding:30px 34px 46px;
+    -webkit-print-color-adjust:exact;
+    print-color-adjust:exact;
+  }
+  .sheet{max-width:1340px;margin:0 auto}
+
+  /* ───────── Masthead ───────── */
+  .masthead{display:flex;justify-content:space-between;align-items:flex-end;gap:18px;flex-wrap:wrap;margin-bottom:20px}
+  .school{font-size:12.5px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase}
+  h1{margin:5px 0 8px;font-size:27px;font-weight:700;letter-spacing:.2px}
+  h1 .cls{color:#8ab4ff}
+  .chips{display:flex;gap:8px;flex-wrap:wrap}
+  .chip{
+    font-size:11.5px;color:var(--muted);
+    border:1px solid var(--border);background:var(--panel2);
+    padding:4px 11px;border-radius:999px;
+  }
+  .chip b{color:var(--text);font-weight:600}
+  .actions{display:flex;gap:10px;align-items:center}
+  .seg{display:flex;background:var(--panel2);border:1px solid var(--border);border-radius:11px;padding:4px;gap:4px}
+  .seg button{
+    border:0;background:transparent;color:var(--muted);
+    font:inherit;font-size:13px;padding:8px 16px;border-radius:8px;cursor:pointer;
+    transition:.15s;
+  }
+  .seg button.on{background:rgba(138,180,255,.14);color:var(--text);font-weight:600}
+  .btn-print{
+    border:1px solid var(--border);background:var(--panel2);color:var(--text);
+    font:inherit;font-size:13px;padding:9px 16px;border-radius:11px;cursor:pointer;transition:.15s;
+  }
+  .btn-print:hover{border-color:#3a4557}
+
+  /* ───────── Timetable grid ───────── */
+  .tscroll{overflow-x:auto;border-radius:14px}
+  .grid{
+    display:grid;
+    grid-template-columns:66px repeat(12,minmax(0,1fr));
+    min-width:1150px;
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:14px;
+    overflow:hidden;
+    box-shadow:0 14px 40px rgba(0,0,0,.38);
+  }
+  .cell{
+    min-height:82px;padding:9px 10px;position:relative;
+    border-right:1px solid var(--border);
+    border-bottom:1px solid var(--border);
+    background:transparent;
+  }
+  .row-last .cell{border-bottom:0}
+  .col-last{border-right:0 !important}
+
+  /* header rows */
+  .h{
+    background:var(--panel2);min-height:0;padding:7px 5px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  }
+  .h .n{font-size:13px;font-weight:700}
+  .h .t{font-size:9px;color:var(--muted);white-space:nowrap;letter-spacing:.2px}
+  .corner{background:var(--panel2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:7px 4px}
+  .corner .n{font-size:12.5px;font-weight:700}
+  .corner .t{font-size:9px;color:var(--muted)}
+
+  .day{
+    background:var(--panel2);
+    display:flex;align-items:center;justify-content:center;
+    font-size:13px;font-weight:700;letter-spacing:.3px;
+  }
+
+  /* merged consecutive periods: remove the divider */
+  .nor{border-right:0}
+
+  /* subject cell */
+  .meta{display:flex;align-items:center;gap:6px;margin-bottom:7px;min-height:18px}
+  .code{
+    font-family:Consolas,'Courier New',monospace;font-size:9.5px;font-weight:700;letter-spacing:.3px;
+    color:var(--ac,#aab3c5);
+    background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);
+    padding:2.5px 6px;border-radius:6px;line-height:1;
+  }
+  .room{
+    margin-left:auto;
+    font-family:Consolas,'Courier New',monospace;font-size:9.5px;font-weight:600;
+    color:var(--muted);border:1px dashed rgba(255,255,255,.16);
+    padding:2.5px 6px;border-radius:6px;line-height:1;white-space:nowrap;
+  }
+  .name{font-size:12.5px;font-weight:600;line-height:1.3}
+  .teacher{margin-top:3px;font-size:11px;color:var(--muted);line-height:1.3}
+  .extra{margin-top:3px;font-size:10px;color:var(--dim);line-height:1.3}
+  .notemark{
+    position:absolute;top:7px;right:9px;
+    color:#ffd166;font-size:10px;font-weight:700;line-height:1;
+  }
+
+  /* category palettes (muted accents on dark) */
+  .cat-math  {--ac:#8ab4ff;background:rgba(138,180,255,.055)}
+  .cat-sci   {--ac:#7de0a6;background:rgba(125,224,166,.05)}
+  .cat-lang  {--ac:#c3a6ff;background:rgba(195,166,255,.055)}
+  .cat-thai  {--ac:#ffc98b;background:rgba(255,201,139,.05)}
+  .cat-social{--ac:#ff9aa8;background:rgba(255,154,168,.05)}
+  .cat-art   {--ac:#ff9ed2;background:rgba(255,158,210,.055)}
+  .cat-pe    {--ac:#6fe0c8;background:rgba(111,224,200,.05)}
+  .cat-is    {--ac:#7fd6f7;background:rgba(127,214,247,.055)}
+  .cat-act   {--ac:#aab3c5;background:rgba(170,179,197,.045)}
+  .cat-break {--ac:#69748a}
+
+  /* ช่องพักกลางวัน: ผสานแนวตั้ง 5 แถว + ตัวอักษรแนวตั้ง */
+  .lunch-cell{
+    display:flex;align-items:center;justify-content:center;
+    background:repeating-linear-gradient(-45deg,rgba(255,255,255,.022) 0 9px,transparent 9px 18px);
+  }
+  .lunch-text{
+    writing-mode:vertical-rl;text-orientation:mixed;
+    font-size:12px;font-weight:600;letter-spacing:7px;
+    color:var(--dim);white-space:nowrap;
+  }
+  .empty-cell{background:rgba(255,255,255,.012)}
+
+  /* ───────── Real-time status card ───────── */
+  .live-card{
+    margin-bottom:18px;padding:14px 18px;
+    border:1px solid var(--border);border-radius:14px;
+    background:linear-gradient(135deg, rgba(138,180,255,.09), rgba(21,26,35,.85) 45%);
+    display:flex;flex-direction:column;gap:7px;
+  }
+  .live-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .live-date{font-size:12px;color:var(--muted)}
+  .live-clock{margin-left:auto;font-family:Consolas,'Courier New',monospace;font-size:13.5px;font-weight:700;color:var(--text)}
+  .live-main{font-size:17px;font-weight:700;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .live-emoji{font-size:20px}
+  .live-sub{font-size:12.5px;color:var(--muted)}
+  .progress{height:6px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden;max-width:520px}
+  .progress i{display:block;height:100%;background:linear-gradient(90deg,#8ab4ff,#7de0a6);border-radius:99px;transition:width .8s linear}
+  .live-remain{margin-top:4px;font-size:11px;color:var(--muted)}
+  .next-line{font-size:12px;color:var(--muted)}
+
+  /* เซลล์คาบปัจจุบัน */
+  .cell.now{
+    box-shadow:inset 0 0 0 2px #8ab4ff, 0 0 20px rgba(138,180,255,.28);
+    z-index:1;animation:nowpulse 2.6s ease-in-out infinite;
+  }
+  @keyframes nowpulse{50%{box-shadow:inset 0 0 0 2px #8ab4ff, 0 0 8px rgba(138,180,255,.1)}}
+
+  /* ───────── Legend / footnote ───────── */
+  .legend{display:flex;flex-wrap:wrap;gap:7px 16px;margin-top:14px}
+  .lg{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--muted)}
+  .dot{width:9px;height:9px;border-radius:3px;flex:none}
+  .fn{margin-top:10px;font-size:11.5px;color:var(--dim);line-height:1.6}
+  .fn .star{color:#ffd166;font-weight:700}
+
+  .signs{display:flex;justify-content:space-between;gap:24px;margin-top:30px;flex-wrap:wrap}
+  .sig{font-size:12.5px;color:var(--muted)}
+  .sig .line{display:inline-block;width:230px;border-bottom:1px dotted #4a5568;height:14px;margin-left:8px}
+
+  /* ───────── Subject catalog ───────── */
+  .catalog{margin-top:44px}
+  .catalog h2{font-size:18px;margin:0 0 4px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .total-badge{
+    font-size:12.5px;font-weight:700;color:#8ab4ff;
+    background:rgba(138,180,255,.12);border:1px solid rgba(138,180,255,.32);
+    padding:4px 13px;border-radius:999px;white-space:nowrap;
+  }
+  .catalog .hint{font-size:12px;color:var(--dim);margin:0 0 16px}
+  .cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+  .cat-card{background:var(--panel);border:1px solid var(--border);border-radius:13px;padding:13px 15px}
+  .cat-card h3{
+    margin:0 0 4px;font-size:13px;font-weight:700;
+    display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  }
+  .cat-card h3 .cnt{
+    margin-left:auto;font-size:10.5px;font-weight:600;color:var(--muted);
+    background:rgba(255,255,255,.05);border:1px solid var(--border);
+    padding:2px 9px;border-radius:999px;white-space:nowrap;
+  }
+  .sub-row{display:flex;align-items:baseline;gap:8px;padding:7px 0 6px;border-top:1px dashed rgba(255,255,255,.07)}
+  .sub-row:first-of-type{border-top:0}
+  .sub-row .cd{font-family:Consolas,monospace;font-size:10px;font-weight:700;color:var(--ac,#aab3c5);flex:none;min-width:56px}
+  .sub-row .nm{font-size:12px;font-weight:600}
+  .sub-row .tc{margin-left:auto;font-size:10.5px;color:var(--muted);text-align:right;white-space:nowrap}
+
+  footer{margin-top:36px;font-size:11px;color:var(--dim);text-align:center}
+
+  /* ───────── Print ───────── */
+  @media print{
+    @page{size:A4 landscape;margin:0}
+    *{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important}
+    html,body{background:#0e1117}
+    body{padding:9mm 10mm 12mm}
+    /* เลเยอร์พื้นหลังเข้มเต็มหน้า บังคับพิมพ์ทุกหน้า */
+    .print-bg{display:block;position:fixed;inset:0;z-index:-1;background:#0e1117}
+    .no-print{display:none !important}
+    .tscroll{overflow:visible}
+    .grid{min-width:0;box-shadow:none}
+    .cell{min-height:66px;padding:7px 8px}
+    .cell.now{box-shadow:none !important;animation:none !important}
+    .masthead{margin-bottom:12px}
+    h1{font-size:22px}
+    .catalog{break-before:page;page-break-before:always;margin-top:0;padding-top:4mm}
+  }
+
+  [hidden]{display:none !important}
+  .actions,.seg{flex-wrap:wrap}
+  .school-end{display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px;background:var(--panel2)}
+  .grid.saturday{display:block;min-width:900px}
+  .sat-table{width:100%;border-collapse:collapse;text-align:center}
+  .sat-table caption{padding:20px;font-size:19px;font-weight:700;text-align:left}
+  .sat-table caption small{font-size:12px;color:var(--muted);font-weight:400}
+  .sat-table th,.sat-table td{padding:15px 10px;border:1px solid var(--border)}
+  .sat-table th{background:var(--panel2);font-size:12px}
+  .sat-table small{color:var(--muted)}
+  .sat-table .now{box-shadow:inset 0 0 0 2px #8ab4ff}
+  button:focus-visible{outline:2px solid #8ab4ff;outline-offset:3px}
+  @media(max-width:600px){body{padding:18px 12px}.actions{width:100%}.seg{width:100%}.seg button{flex:1;padding:9px 10px}h1{font-size:23px}}
+  @media print{.grid.saturday{min-width:0}.sat-table th,.sat-table td{padding:8px}}
+</style>
+</head>
+<body>
+<div class="print-bg"></div>
+<div class="sheet">
+
+  <header class="masthead">
+    <div>
+      <div class="school">รร. บางปะกอก วิทยาคม</div>
+      <h1>ตารางเรียนชั้นมัธยมศึกษาปีที่ <span class="cls">2/14</span></h1>
+      <div class="chips">
+        <span class="chip">ห้องเรียนประจำชั้น <b>7105</b></span>
+        <span class="chip" id="semLabel">ภาคเรียนที่ <b>2/2569</b></span>
+      </div>
+    </div>
+    <div class="actions no-print">
+      <div class="seg" id="seg" role="group" aria-label="เลือกตารางเรียน">
+        <button data-sem="2" class="on">ภาคเรียน 2/2569</button>
+        <button data-sem="1">ภาคเรียน 1/2569</button>
+        <button data-sem="sat">วันเสาร์ · Intensive</button>
+      </div>
+      <button class="btn-print" onclick="window.print()">🖨️ พิมพ์ / บันทึก PDF</button>
+    </div>
+  </header>
+
+  <section class="live-card no-print" id="liveCard" aria-live="polite"></section>
+
+  <div class="tscroll"><div class="grid" id="grid"></div></div>
+
+  <div class="legend" id="legend"></div>
+  <p class="fn" id="fnote"></p>
+
+  <div class="signs">
+    <span class="sig">ลงชื่อ<span class="line"></span>หัวหน้ากลุ่มสาระการเรียนรู้</span>
+    <span class="sig">ลงชื่อ<span class="line"></span>ผู้อำนวยการ</span>
+  </div>
+
+  <section class="catalog">
+    <h2>รายวิชาทั้งหมดของชั้น ม.2/14 <span class="total-badge" id="catTotal"></span></h2>
+    <p class="hint">จัดกลุ่มตามสาระการเรียนรู้ • แสดงจำนวนรายวิชาต่อหมวด • ครูต่างประเทศใช้คำนำหน้า T.</p>
+    <div class="cat-grid" id="catGrid"></div>
+  </section>
+
+  <footer>ตารางเรียนประจำห้อง 7105 • ชั้นมัธยมศึกษาปีที่ 2/14 • รร. บางปะกอก วิทยาคม</footer>
+</div>
+
+<script>
+/* ───────────── หมวดสี ───────────── */
+const CATS = {
+  math:  {label:'คณิตศาสตร์',            c:'#8ab4ff'},
+  sci:   {label:'วิทยาศาสตร์',            c:'#7de0a6'},
+  lang:  {label:'ภาษาต่างประเทศ',         c:'#c3a6ff'},
+  thai:  {label:'ภาษาไทย',               c:'#ffc98b'},
+  social:{label:'สังคมศึกษาฯ',            c:'#ff9aa8'},
+  art:   {label:'ศิลปะ',                 c:'#ff9ed2'},
+  pe:    {label:'สุขศึกษา–พลศึกษา',       c:'#6fe0c8'},
+  is:    {label:'การงานอาชีพ / IS',      c:'#7fd6f7'},
+  act:   {label:'กิจกรรมพัฒนาผู้เรียน',    c:'#aab3c5'},
+  break: {label:'พักกลางวัน',            c:'#69748a'},
+};
+
+/* ───────────── ทะเบียนรายวิชา ───────────── */
+const SUBJECTS = {
+  /* ภาคเรียนที่ 2/2569 */
+  'MA22106':{n:'Math',              t:'ครูณัฐพล',     cat:'math'},
+  'MA22206':{n:'คณิต',              t:'ครูพชรพร',    cat:'math'},
+  'SC22106':{n:'Sci',               t:'T. Waqar',    cat:'sci'},
+  'SC22206':{n:'Com Sci',           t:'ครูอิสรา',     r:'326', cat:'sci'},
+  'EN22106':{n:'Eng',               t:'T. Paul',     cat:'lang'},
+  'EN22206':{n:'Reading & Writing', t:'T. Andrew',   cat:'lang'},
+  'EN22208':{n:'Grammar',           t:'ครูณัฐพงษ์',   cat:'lang'},
+  'EN22210':{n:'Word-bank',         t:'ครูธนภัทร',   cat:'lang'},
+  'OC22106':{n:'Occu',              t:'T. Jackaline',cat:'lang'},
+  'ท22102' :{n:'ไทย',               t:'ครูพัชรินทร์', cat:'thai'},
+  'SO22106':{n:'Social',            t:'T. Cyrel',    cat:'social'},
+  'ส22104' :{n:'ประวัติ',            t:'ครูอามันนุญ',  cat:'social'},
+  'ส20204' :{n:'ผู้ดีบางปะกอก',                       cat:'social'},
+  'ศ22102' :{n:'ศิลปะ',              t:'ครูนุชรี',     r:'331', cat:'art'},
+  'PE22106':{n:'PE',                t:'ครูสมิทธิ์',   cat:'pe'},
+  'HE22104':{n:'Health',            t:'T. Leximae',  cat:'pe'},
+  'I20202' :{n:'IS',                t:'T. Ville',    cat:'is'},
+  'ก22905' :{n:'แนะแนว',             t:'ครูกฤษฎา',    cat:'act'},
+  'ก22906' :{n:'ยุวะ',               extra:'ม.2/1–14', cat:'act'},
+  'ก22908' :{n:'จิตอาสา',            t:'ครูที่ปรึกษา',  cat:'act'},
+  /* ภาคเรียนที่ 1/2569 */
+  'MA22105':{n:'Math',              t:'ครูณัฐพล',     cat:'math'},
+  'MA22205':{n:'คณิต',              t:'ครูพชรพร',    cat:'math'},
+  'SC22105':{n:'Sci',               t:'T. Waqar',    cat:'sci'},
+  'SC22205':{n:'Com Sci',           t:'ครูอิสรา',     r:'326', cat:'sci'},
+  'EN22105':{n:'Eng',               t:'T. Paul',     cat:'lang'},
+  'EN22205':{n:'Reading & Writing', t:'T. Andrew',   cat:'lang'},
+  'EN22207':{n:'Grammar',           t:'ครูณัฐพงษ์',   cat:'lang'},
+  'EN22209':{n:'Word-bank',         t:'ครูธนภัทร',   cat:'lang'},
+  'ท22101' :{n:'ไทย',               t:'ครูพัชรินทร์', cat:'thai'},
+  'SO22105':{n:'Social',            t:'T. Cyrel',    cat:'social'},
+  'ส22102' :{n:'ประวัติ',            t:'ครูอามันนุญ',  cat:'social'},
+  'ส20203' :{n:'ผู้ดีบางปะกอก',                       cat:'social'},
+  'PE22105':{n:'PE',                t:'ครูสมิทธิ์',   cat:'pe'},
+  'HE22103':{n:'Health',            t:'T. Leximae',  cat:'pe'},
+  'I20201' :{n:'IS',                t:'T. Ville',    cat:'is'},
+  'ก22901' :{n:'แนะแนว',             t:'ครูกฤษฎา',    cat:'act'},
+  'ก22902' :{n:'ยุวะ',               extra:'ม.2/1–14', cat:'act'},
+  'ก22904' :{n:'จิตอาสา',            t:'ครูที่ปรึกษา',  cat:'act'},
+  'ส22101' :{n:'สังคมศึกษา',          r:'731', cat:'social', note:1},
+};
+
+/* เซลล์กิจกรรมพิเศษ */
+const H   = {n:'โฮมรูม',              t:'ครูที่ปรึกษา', cat:'act'};
+const P   = {n:'ประชุมระดับ', cat:'act'};
+const L   = {n:'พักกลางวัน',         cat:'break'}; /* วางแบบผสานแนวตั้งใน render() */
+const G   = {n:'กิจกรรม รร.วิถีพุทธ 🪷', cat:'act'};
+const C   = {n:'ชุมนุม', code:'Clubs', extra:'อาจสิ้นสุดคาบ 9 — รอยืนยัน', cat:'act'};
+const CH  = {n:'ชุมนุม', extra:'อาจสิ้นสุดคาบ 9 — รอยืนยัน', cat:'act'};
+const EP  = {n:'EP Junior Clubs', cat:'act'};
+const KOM = {n:'คอมพิวเตอร์', t:'ครูวรศักดิ์', r:'342', cat:'is', note:1};
+const FT  = code => ({code, n:'ผู้ดีบางปะกอก', extra:'ทัศนศึกษา', cat:'social'});
+
+/* ───────────── ข้อมูลตาราง (12 คาบ × 5 วัน) ───────────── */
+const TIMES = ['07.30–08.20','08.20–09.10','09.10–10.00','10.00–10.50','10.50–11.40',
+               '11.40–12.30','12.30–13.20','13.20–14.10','14.10–15.00','15.00–15.50',
+               '15.50–16.40','16.40–17.30'];
+const DAYS = ['จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์'];
+
+const SEM = {
+  2:{ label:'2/2569', rows:{
+    'จันทร์'   :[H, P, 'MA22206', 'PE22106', 'EN22208', L, 'SC22206', 'SC22206', 'EN22106', 'SO22106', null, null],
+    'อังคาร'   :[H, 'ศ22102', 'ศ22102', 'OC22106', 'OC22106', L, 'ท22102', 'SO22106', 'EN22210', 'EN22206', null, null],
+    'พุธ'      :[H, 'ก22906', 'MA22106', 'MA22106', 'ส22104', L, 'HE22104', 'ท22102', C, C, C, null],
+    'พฤหัสบดี' :['ก22908', G, 'EN22106', 'ท22102', 'ก22905', L, 'EN22206', 'SC22106', 'SC22106', 'MA22206', null, null],
+    'ศุกร์'    :[FT('ส20204'), 'MA22106', 'SC22106', 'SO22106', 'MA22206', L, 'EN22106', 'I20202', 'I20202', 'EN22208', null, null],
+  }},
+  1:{ label:'1/2569', rows:{
+    'จันทร์'   :[H, P, 'EN22105', 'SC22205', 'SC22205', L, 'MA22205',
+                 {code:'ส22101', n:'สังคมศึกษา', r:'731', cat:'social', note:1}, 'ท22101', null, null, null],
+    'อังคาร'   :[H, 'SC22105', 'SC22105', 'ส22102', 'MA22205', L, 'ท22101', 'PE22105', KOM, KOM, null, null],
+    'พุธ'      :[H, 'MA22105', 'EN22209', 'EN22207', 'EN22205', L, 'EN22105', 'ก22902', 'SC22105', 'SO22105', null, null],
+    'พฤหัสบดี' :['ก22904', G, 'HE22103', 'SO22105', 'ท22101', L, 'MA22205', CH, 'ก22901', 'EN22105', null, null],
+    'ศุกร์'    :[FT('ส20203'), 'MA22105', 'MA22105', 'SO22105', 'EN22205', L, 'EN22207', 'I20201', 'I20201', EP, EP, null],
+  }},
+};
+
+/* ───────────── สารบบรายวิชา ───────────── */
+const CATALOG = [
+  {icon:'📐', name:'คณิตศาสตร์', cat:'math',   items:[['MA22106','Math','ครูณัฐพล'],['MA22206','คณิต','ครูพชรพร']]},
+  {icon:'🧪', name:'วิทยาศาสตร์', cat:'sci',    items:[['SC22106','Sci','T. Waqar'],['SC22206','Com Sci','ครูอิสรา • ห้อง 326']]},
+  {icon:'🗣️', name:'ภาษาต่างประเทศ', cat:'lang', items:[['EN22106','Eng','T. Paul'],['EN22206','Reading & Writing','T. Andrew'],['EN22208','Grammar','ครูณัฐพงษ์'],['EN22210','Word-bank','ครูธนภัทร'],['OC22106','Occu','T. Jackaline']]},
+  {icon:'📖', name:'ภาษาไทย', cat:'thai',       items:[['ท22102','ไทย','ครูพัชรินทร์']]},
+  {icon:'🌍', name:'สังคมศึกษา ศาสนา และวัฒนธรรม', cat:'social', items:[['SO22106','Social','T. Cyrel'],['ส22104','ประวัติ','ครูอามันนุญ'],['ส20204','ผู้ดีบางปะกอก','']]},
+  {icon:'🎨', name:'ศิลปะ', cat:'art',          items:[['ศ22102','ศิลปะ','ครูนุชรี • ห้อง 331']]},
+  {icon:'🏐', name:'สุขศึกษาและพลศึกษา', cat:'pe', items:[['PE22106','PE','ครูสมิทธิ์ • ส.ฟุตซอล'],['HE22104','Health','T. Leximae']]},
+  {icon:'💻', name:'การงานอาชีพ / IS', cat:'is', items:[['I20202','IS','T. Ville']]},
+  {icon:'🎖️', name:'กิจกรรมพัฒนาผู้เรียน', cat:'act', items:[['ก22905','แนะแนว','ครูกฤษฎา'],['ก22906','ยุวะ','ม.2/1–14'],['ก22908','จิตอาสา','ครูที่ปรึกษา'],['Clubs','ชุมนุม','แจ้งภายหลัง']]},
+];
+
+/* ───────────── Render ───────────── */
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+
+function resolve(cell){
+  if (typeof cell === 'string') return {code:cell, ...SUBJECTS[cell]};
+  return cell;
+}
+const keyOf = c => c ? (c.code || c.n) : null;
+
+function cellHTML(cell, ghost, noRight, isLastRow, isLastCol, place, attrs){
+  const edge = (noRight ? ' nor ' : '') + (isLastCol ? ' col-last ' : '');
+  const pos = place ? ` style="${place}"` : '';
+  const at = attrs ? ' ' + attrs : '';
+  if (!cell) return `<div class="cell empty-cell${edge}${isLastRow?' row-last':''}"${pos}${at}></div>`;
+  if (cell.cat === 'break')
+    return `<div class="cell cat-break${edge}${isLastRow?' row-last':''}"${pos}${at}><div class="lunch-cell">${esc(cell.n)}</div></div>`;
+  if (ghost) return `<div class="cell cat-${cell.cat}${edge}${isLastRow?' row-last':''}"${pos}${at}></div>`;
+  const meta =
+    (cell.code ? `<span class="code">${esc(cell.code)}</span>` : '') +
+    (cell.r ? `<span class="room">${esc(cell.r)}</span>` : '');
+  const noteMark = cell.note ? `<span class="notemark" title="ปรับตามหมายเหตุในต้นฉบับ">✱</span>` : '';
+  return `<div class="cell cat-${cell.cat}${edge}${isLastRow?' row-last':''}"${pos}${at}>
+      ${noteMark}
+      ${meta ? `<div class="meta">${meta}</div>` : ''}
+      <div class="name">${esc(cell.n)}</div>
+      ${cell.t ? `<div class="teacher">${esc(cell.t)}</div>` : ''}
+      ${cell.extra ? `<div class="extra">${esc(cell.extra)}</div>` : ''}
+    </div>`;
+}
+
+function render(semKey){
+  currentSem = semKey;
+  if(semKey === 'sat'){ renderSaturday(); return; }
+  document.querySelector('.catalog').hidden = false;
+  const sem = SEM[semKey];
+  const grid = document.getElementById('grid');
+  const lastPeriod = Math.max(...Object.values(sem.rows).map(row=>row.findLastIndex(c=>c!=null)));
+  grid.classList.remove('saturday');
+  grid.style.gridTemplateColumns = `66px repeat(${lastPeriod+1},minmax(0,1fr))`;
+  let html = `<div class="corner" style="grid-column:1;grid-row:1"><span class="n">วัน</span><span class="t">เวลา / คาบ</span></div>`;
+  TIMES.slice(0,lastPeriod+1).forEach((t,i)=>{ html += `<div class="h" style="grid-column:${i+2};grid-row:1"><span class="n">${i}</span><span class="t">${t}</span></div>`; });
+
+  DAYS.forEach((d,di)=>{
+    const row = sem.rows[d];
+    const r = di + 2;
+    const isLastRow = di === DAYS.length-1;
+    html += `<div class="cell day${isLastRow?' row-last':''}" style="grid-column:1;grid-row:${r}">${d}</div>`;
+    row.forEach((raw,i)=>{
+      if(i===5 || i>lastPeriod) return;
+      const end = row.findLastIndex(c=>c!=null);
+      if(i>end){
+        if(i===end+1) html += `<div class="cell school-end" style="grid-column:${i+2} / -1;grid-row:${r}"></div>`;
+        return;
+      } /* คาบ 5 พักกลางวัน: ผสานแนวตั้งเป็นช่องเดียว */
+      const c = resolve(raw);
+      const prev = resolve(row[i-1]);
+      const next = resolve(row[i+1]);
+      const k = keyOf(c);
+      const ghost = i>0 && k && k===keyOf(prev) && c.cat!=='break';
+      const noRight = k && next && k===keyOf(next) && c.cat!=='break';
+      html += cellHTML(c, ghost, noRight, isLastRow, i===lastPeriod, `grid-column:${i+2};grid-row:${r}`, `data-day="${d}" data-per="${i}"`);
+    });
+  });
+
+  /* คาบที่ 5 (11.40–12.30): ช่องเดียวครอบคลุมทั้ง 5 วัน + ตัวอักษรแนวตั้ง */
+  html += `<div class="cell cat-break lunch-cell" style="grid-column:7;grid-row:2 / span 5;border-bottom:0">
+      <div class="lunch-text">พักกลางวัน</div>
+    </div>`;
+  grid.innerHTML = html;
+
+  document.getElementById('semLabel').innerHTML = `ภาคเรียนที่ <b>${sem.label}</b>`;
+  document.getElementById('fnote').innerHTML =
+    Object.values(sem.rows).flat().some(c => c && (typeof c==='object' ? c.note : SUBJECTS[c] && SUBJECTS[c].note))
+      ? `<span class="star">✱</span> คาบที่มีเครื่องหมายนี้ปรับตามหมายเหตุที่เขียนเพิ่มในต้นฉบับ (จันทร์ คาบ 7 — ส22101 ห้อง 731 / อังคาร คาบ 9–10 — คอมพิวเตอร์ ห้อง 342) · ห้องเรียนปกติคือ 7105 (ไม่แสดงซ้ำในทุกคาบ)`
+      : `ห้องเรียนปกติคือ 7105 (ไม่แสดงซ้ำในทุกคาบ) — แสดงเฉพาะห้องพิเศษ เช่น 326, 331, 342, 731`;
+  document.getElementById('fnote').innerHTML += '<br>ชุมนุมอาจปรับให้สิ้นสุดภายในคาบ 9 (รอยืนยัน) — ขณะนี้แสดงเวลาตามตารางเดิม';
+}
+
+function renderLegend(){
+  document.getElementById('legend').innerHTML =
+    Object.entries(CATS).map(([k,v]) =>
+      `<span class="lg"><span class="dot" style="background:${v.c}"></span>${v.label}</span>`).join('');
+}
+
+function renderCatalog(){
+  const total = CATALOG.reduce((s,g)=>s+g.items.length,0);
+  document.getElementById('catTotal').textContent = `• ${total} วิชา`;
+  document.getElementById('catGrid').innerHTML = CATALOG.map(g =>
+    `<div class="cat-card" style="--ac:${CATS[g.cat].c}">
+       <h3>${g.icon} ${g.name} <span class="cnt">(${g.items.length} วิชา)</span></h3>
+       ${g.items.map(([cd,nm,tc]) =>
+         `<div class="sub-row"><span class="cd">${esc(cd)}</span><span class="nm">${esc(nm)}</span><span class="tc">${esc(tc||'')}</span></div>`).join('')}
+     </div>`).join('');
+}
+
+/* ═══════════ Real-Time Engine (เฟส 1: ตารางปกติ จันทร์–ศุกร์) ═══════════ */
+let currentSem = 2;
+
+const SAT_SUBJECTS = {
+ ai:{n:'Edsy AI',t:'T. Norlee',cat:'is'}, social:{n:'Social+',t:'T. Mon',cat:'social'},
+ writing:{n:'Writing',t:'T. Andrew',cat:'lang'}, math:{n:'Adv. Math',t:'T. Aum',cat:'math'},
+ eng:{n:'Eng Activity',t:'T. Jairah',cat:'lang'}, sci:{n:'Science+',t:'Guest (Science)',cat:'sci'}
+};
+const SAT_TIMES = ['08.30–09.30','09.40–10.40','10.40–11.40','12.30–13.30','13.30–14.30'];
+const SAT_SCHEDULE = [
+ ['2026-11-07','ai','social','math','eng','sci'],
+ ['2026-11-14','ai','writing','math','eng','sci'],
+ ['2026-11-21','ai','social','math','eng','sci'],
+ ['2026-12-12','writing','eng','math','ai','sci'],
+ ['2026-12-19','ai','social','math','eng','sci'],
+ ['2026-12-26','writing','eng','math','ai','sci'],
+ ['2027-01-16','ai','social','math','eng','sci'],
+ ['2027-01-30','math','writing','sci','eng','ai'],
+ ['2027-02-06','ai','social','math','eng','sci'],
+ ['2027-02-13','math','writing','sci','eng','ai']
+];
+function renderSaturday(){
+ const grid=document.getElementById('grid');
+ grid.classList.add('saturday'); grid.style.gridTemplateColumns='none';
+ grid.innerHTML=`<table class="sat-table"><caption>Saturday Intensive · ม.2 · ภาคเรียน 2/2569<br><small>7 พ.ย. 2569 – 13 ก.พ. 2570 · รวม 10 วันเสาร์</small></caption>
+ <thead><tr><th scope="col">ครั้งที่</th><th scope="col">วันเสาร์ที่</th>${SAT_TIMES.map((t,i)=>`<th scope="col">คาบ ${i+1}<br><small>${t}</small></th>`).join('')}</tr></thead>
+ <tbody>${SAT_SCHEDULE.map(([date,...keys],i)=>`<tr><th scope="row">${i+1}</th><td>${new Date(date+'T12:00:00+07:00').toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Bangkok'})}</td>${keys.map((key,j)=>{const c=SAT_SUBJECTS[key];return `<td class="cat-${c.cat}" data-date="${date}" data-per="${j}"><div class="name">${c.n}</div><div class="teacher">${c.t}</div></td>`}).join('')}</tr>`).join('')}</tbody></table>`;
+ document.getElementById('semLabel').textContent='วันเสาร์ Intensive · 2/2569';
+ document.getElementById('fnote').textContent='ตารางวันเสาร์แยกจากตารางจันทร์–ศุกร์ • พักของว่าง 09.30–09.40 น. • พักกลางวัน 11.40–12.30 น. • เลิกเรียน 14.30 น. • Social+ และ Writing สลับตามวันที่ระบุ';
+ document.querySelector('.catalog').hidden=true;
+}
+const bangkokNow = (date=new Date()) => new Date(date.toLocaleString('en-US',{timeZone:'Asia/Bangkok'}));
+const dateKey = now => `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+const ranges = times => times.map(t=>{const [start,end]=t.split('–').map(v=>{const [h,m]=v.split('.').map(Number);return h*60+m;});return {start,end};});
+
+/* แปลงช่วงเวลาคาบเรียน เช่น '07.30–08.20' → {start:450, end:500} (นาที) */
+const PERIOD_RANGE = TIMES.map(t=>{
+  const [a,b] = t.split('–');
+  const toMin = s=>{const [h,m]=s.split('.').map(Number); return h*60+m;};
+  return {start:toMin(a), end:toMin(b)};
+});
+const CAT_EMOJI = {math:'📐',sci:'🧪',lang:'🗣️',thai:'📖',social:'🌍',art:'🎨',pe:'🏐',is:'💻',act:'🎖️',break:'🍜'};
+
+/* เลือกตารางตามวัน — จุดเดียวที่ตัดสินว่าจะใช้ตารางอะไร */
+function resolveSchedule(now){
+ const day=now.getDay();
+ if(currentSem==='sat'){
+   const entry=SAT_SCHEDULE.find(row=>row[0]===dateKey(now));
+   if(!entry) return null;
+   return {dayName:'เสาร์',row:entry.slice(1).map(k=>SAT_SUBJECTS[k]),label:'วันเสาร์ Intensive',times:SAT_TIMES,range:ranges(SAT_TIMES),offset:1};
+ }
+ if(day===0 || day===6) return null;
+ const sem=SEM[currentSem], d=DAYS[day-1];
+ return {dayName:d,row:sem.rows[d],label:'ภาคเรียนที่ '+sem.label,times:TIMES,range:PERIOD_RANGE,offset:0};
+}
+
+const firstActivity = (row,from)=>{ for(let i=from;i<row.length;i++){ if(resolve(row[i])) return i; } return -1; };
+
+/* ตรวจสถานะปัจจุบัน: ก่อนเรียน / เรียน / พักกลางวัน / คาบว่าง / เลิกเรียน / วันหยุด */
+function liveState(now = bangkokNow()){
+  const mins = now.getHours()*60 + now.getMinutes() + now.getSeconds()/60;
+  const sched = resolveSchedule(now);
+  if(!sched) return {now, mins, state:'no-school', isSat: currentSem==='sat'};
+  const last = sched.row.findLastIndex(c=>c!=null);
+  if(mins>=sched.range[last].end) return {...sched,now,mins,state:'after'};
+  const idx = sched.range.findIndex(p=> mins>=p.start && mins<p.end);
+  if(idx === -1)
+    return {...sched, now, mins,
+      state: mins<sched.range[0].start ? 'before' : 'lunch',
+      nextIdx: mins<sched.range[0].start ? firstActivity(sched.row,0) : sched.range.findIndex(p=>p.start>mins)};
+  const cell = resolve(sched.row[idx]);
+  const base = {...sched, now, mins, idx, nextIdx:firstActivity(sched.row, idx+1)};
+  if(cell && cell.cat==='break') return {...base, state:'lunch'};
+  if(!cell) return {...base, state:'free'};
+  return {...base, state:'class', cell};
+}
+
+function nextText(st){
+  if(st.nextIdx==null || st.nextIdx<0) return '🎉 ไม่มีคาบเรียนเหลืออีกแล้วในวันนี้';
+  const c = resolve(st.row[st.nextIdx]);
+  return `⏭️ คาบถัดไป ${st.nextIdx+st.offset} (${st.times[st.nextIdx]}): ${esc(c.n)}${c.t? ' • '+esc(c.t):''}${c.r? ' • ห้อง '+esc(c.r):''}`;
+}
+
+function renderLiveCard(st){
+  const clock = st.now.toLocaleTimeString('th-TH',{hour12:false});
+  const date = st.now.toLocaleDateString('th-TH',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  let main='', sub='', prog='', next='';
+  const p = st.idx!=null ? st.range[st.idx] : null;
+  if(st.state==='class'){
+    const c = st.cell;
+    main = `<span class="live-emoji">${CAT_EMOJI[c.cat]||'📘'}</span> กำลังเรียน: ${esc(c.n)}${c.code? ` <span class="code">${esc(c.code)}</span>`:''}`;
+    sub = `คาบ ${st.idx+st.offset} • ${st.times[st.idx]}${c.t? ' • '+esc(c.t):''}${c.r? ' • ห้อง '+esc(c.r):''}`;
+    const pct = Math.max(0, Math.min(100, (st.mins-p.start)/(p.end-p.start)*100));
+    const left = Math.max(0, Math.ceil(p.end - st.mins));
+    prog = `<div class="progress"><i style="width:${pct}%"></i></div><div class="live-remain">⏳ เหลืออีก ${left} นาที จะหมดคาบ</div>`;
+    next = nextText(st);
+  } else if(st.state==='lunch'){
+    main = currentSem==='sat' && st.mins<600 ? '🍎 พักของว่าง' : '🍜 พักกลางวัน';
+    sub = 'พักระหว่างคาบเรียน';
+    next = nextText(st);
+  } else if(st.state==='before'){
+    main = '🌅 ยังไม่เริ่มคาบเรียน';
+    sub = `คาบแรกของวัน${esc(st.dayName)} เริ่ม ${st.times[0].split('–')[0]} น.`;
+    next = nextText(st);
+  } else if(st.state==='free'){
+    main = '🪶 คาบนี้ว่าง — ไม่มีคาบเรียน';
+    sub = `คาบ ${st.idx+st.offset} • ${st.times[st.idx]} • ${esc(st.dayName)}`;
+    next = nextText(st);
+  } else if(st.state==='after'){
+    main = '🌙 เลิกเรียนแล้วสำหรับวันนี้';
+    sub = `${esc(st.dayName)} • ${esc(st.label)} — เจอกันวันถัดไป!`;
+  } else {
+    main = st.isSat ? '📅 วันนี้ไม่มีเรียนในตารางวันเสาร์ Intensive' : '☀️ วันนี้ไม่มีเรียนในตารางจันทร์–ศุกร์';
+    sub = st.isSat ? 'ตรวจสอบวันเรียนทั้ง 10 ครั้งในตารางด้านล่าง' : 'เลือกตารางวันเสาร์เพื่อดูวันเรียนพิเศษ';
+  }
+  document.getElementById('liveCard').innerHTML = `
+    <div class="live-top">
+      <span class="live-date">📅 ${date}${st.dayName? ' • 📍 '+esc(st.dayName)+' • '+esc(st.label):''}</span>
+      <span class="live-clock">🕒 ${clock}</span>
+    </div>
+    <div class="live-main">${main}</div>
+    ${sub?`<div class="live-sub">${sub}</div>`:''}
+    ${prog}${next?`<div class="next-line">${next}</div>`:''}`;
+}
+
+function applyNowHighlight(st){
+  document.querySelectorAll('#grid .now').forEach(e=>e.classList.remove('now'));
+  if(!st || !['class','lunch'].includes(st.state)) return;
+  if(currentSem==='sat'){
+    const el=document.querySelector(`#grid [data-date="${dateKey(st.now)}"][data-per="${st.idx}"]`);
+    if(el && st.state==='class') el.classList.add('now');
+    return;
+  }
+  const sel = st.state==='lunch' ? '#grid .lunch-cell'
+            : `#grid [data-day="${st.dayName}"][data-per="${st.idx}"]`;
+  const el = document.querySelector(sel);
+  if(el) el.classList.add('now');
+}
+
+function tick(){
+  const st = liveState();
+  renderLiveCard(st);
+  applyNowHighlight(st);
+}
+
+/* ───────────── Events ───────────── */
+document.getElementById('seg').addEventListener('click', e=>{
+  const b = e.target.closest('button'); if(!b) return;
+  document.querySelectorAll('#seg button').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on');
+  render(b.dataset.sem==='sat' ? 'sat' : +b.dataset.sem);
+  document.querySelectorAll('#seg button').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
+  tick();
+});
+
+renderLegend();
+renderCatalog();
+render(2);
+document.querySelectorAll('#seg button').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.sem==='2')));
+tick();
+setInterval(tick, 15000);
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) tick(); });
+window.addEventListener('focus', tick);
+</script>
+</body>
+</html>
