@@ -429,7 +429,7 @@ function render(semKey){
   document.querySelector('.catalog').hidden = false;
   const sem = SEM[semKey];
   const grid = document.getElementById('grid');
-  const lastPeriod = Math.max(...Object.values(sem.rows).map(row=>row.findLastIndex(c=>c!=null)));
+  const lastPeriod = TIMES.length - 1;
   grid.classList.remove('saturday');
   grid.style.gridTemplateColumns = `66px repeat(${lastPeriod+1},minmax(0,1fr))`;
   let html = `<div class="corner" style="grid-column:1;grid-row:1"><span class="n">วัน</span><span class="t">เวลา / คาบ</span></div>`;
@@ -442,11 +442,6 @@ function render(semKey){
     html += `<div class="cell day${isLastRow?' row-last':''}" style="grid-column:1;grid-row:${r}">${d}</div>`;
     row.forEach((raw,i)=>{
       if(i===5 || i>lastPeriod) return;
-      const end = row.findLastIndex(c=>c!=null);
-      if(i>end){
-        if(i===end+1) html += `<div class="cell school-end" style="grid-column:${i+2} / -1;grid-row:${r}"></div>`;
-        return;
-      } /* คาบ 5 พักกลางวัน: ผสานแนวตั้งเป็นช่องเดียว */
       const c = resolve(raw);
       const prev = resolve(row[i-1]);
       const next = resolve(row[i+1]);
